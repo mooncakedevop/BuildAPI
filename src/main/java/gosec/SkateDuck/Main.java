@@ -1,14 +1,12 @@
-import Analyzer.Analyzer;
+package gosec.SkateDuck;
+
+import gosec.SkateDuck.Analyzer.Analyzer;
 import soot.*;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
-import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.options.Options;
-import soot.util.Chain;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class Main {
     public void setupSoot(String apk) {
@@ -48,6 +46,7 @@ public class Main {
                 main.setupSoot(apk);
                 ProcessManifest processManifest = new ProcessManifest(apk);
                 Analyzer aly = new Analyzer(Scene.v().getClasses(), processManifest.getPackageName());
+                System.out.println(processManifest.getPackageName() + "   analyzed");
             } catch (Exception e) {
                 e.printStackTrace();
             }

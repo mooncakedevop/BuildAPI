@@ -1,16 +1,17 @@
-package Analyzer;
+package gosec.SkateDuck.Analyzer;
 
-import Builder.Builder;
+import gosec.SkateDuck.Builder.Builder;
+import gosec.SkateDuck.Util;
 import soot.*;
 import soot.jimple.*;
-import soot.jimple.internal.ImmediateBox;
 import soot.tagkit.*;
 import soot.toolkits.graph.BriefUnitGraph;
 import soot.util.Chain;
 
+import java.io.File;
 import java.util.*;
 
-import static Analyzer.Retrofit.*;
+import static gosec.SkateDuck.Analyzer.Retrofit.*;
 
 public class Analyzer {
     //    <okhttp3.Request$Builder: void <init>()>()
@@ -21,22 +22,22 @@ public class Analyzer {
             "<okhttp3.Headers$Builder: okhttp3.Headers$Builder <add>(java.lang.String, java.lang.String)>"});
     private List<String> post = Arrays.asList(new String[]{"<okhttp3.Request$Builder: okhttp3.Request$Builder post(okhttp3.RequestBody)>"});
 
+    private String pkg;
+    private String outputPath;
     public Analyzer(Chain<SootClass> classes, String pkg) {
-        forwardAnalyze(classes, pkg);
+        this.pkg = pkg;
+        outputPath = System.getProperty("user.dir") + File.separator + "output" + File.separator + pkg + ".txt";
+        forwardAnalyze(classes);
     }
-//    public void analyze(){
-//        forwardAnalyze(this.classes);
-//    }
 
     private void backwardAnalyze() {
     }
 
-    private void forwardAnalyze(Chain<SootClass> classes, String pkg) {
+    private void forwardAnalyze(Chain<SootClass> classes) {
         Iterator<SootClass> it = classes.stream().iterator();
         for (SootClass cls: classes) {
 //
-            if (cls.getPackageName() != pkg) continue;
-            if (!cls.getName().contains("gosec"))continue;
+            if (!cls.getPackageName().equals( pkg)) continue;
             if (cls.isInterface()) {
                 checkAnnotation(cls);
                 continue;
@@ -60,9 +61,9 @@ public class Analyzer {
         for (SootMethod method : cls.getMethods()) {
             for (Tag tag : method.getTags()) {
                 if (tag instanceof VisibilityAnnotationTag) {
-                    MethodAnnotation((VisibilityAnnotationTag) tag);
+                    MethodAnnotation((VisibilityAnnotationTag) tag, method.getName(),outputPath);
                 } else if (tag instanceof VisibilityParameterAnnotationTag) {
-                    paramAnnotation((VisibilityParameterAnnotationTag) tag);
+                    paramAnnotation((VisibilityParameterAnnotationTag) tag, method.getName(), outputPath);
                 }
             }
 
@@ -143,31 +144,28 @@ public class Analyzer {
         }
     }
     public void buildOkHttp(String methodSig, InvokeExpr invokeExpr){
-        if (methodSig.equals("<okhttp3.Request$Builder: okhttp3.Request$Builder url(java.lang.String)>")) {
+        if (methodSig.equals(OkHttp.url)) {
             ValueBox arg = invokeExpr.getArgBox(0);
             if (arg.getValue() instanceof StringConstant) {
-//
-                System.out.println("url:" + arg);
-            } else {
-                System.out.println("start pointer");
+                Util.output(outputPath,invokeExpr.getMethod().getName(),"url:" + arg);
 
+            } else {
+                Util.output(outputPath,invokeExpr.getMethod().getName(),"start pointer");
             }
-        } else if (methodSig.equals(header.get(0))) {
-            System.out.println("header:" + invokeExpr.getArg(0) + "  :" + invokeExpr.getArg(1));
+        } else if (methodSig.equals(OkHttp.addHeader)) {
+            Util.output(outputPath,invokeExpr.getMethod().getName(),"header:" + invokeExpr.getArg(0) + "  :" + invokeExpr.getArg(1));
         } else if (methodSig.equals(post.get(0))) {
-            System.out.println("post: " + invokeExpr.getArg(0));
+            Util.output(outputPath,invokeExpr.getMethod().getName(),"post: " + invokeExpr.getArg(0));
         }
     }
 
     public void buildRetrofit(String methodSig, InvokeExpr invokeExpr){
-        if (methodSig.equals("<retrofit2.Retrofit$Builder: retrofit2.Retrofit$Builder baseUrl(java.lang.String)>")) {
+        if (methodSig.equals(BaseUrlSig)) {
             ValueBox arg = invokeExpr.getArgBox(0);
             if (arg.getValue() instanceof StringConstant) {
-//
-                System.out.println("baseurl:" + arg.getValue());
+                Util.output(outputPath,invokeExpr.getMethod().getName(),"baseurl:" + arg.getValue());
             } else {
-                System.out.println("baseurl start pointer");
-
+                Util.output(outputPath,invokeExpr.getMethod().getName(),"baseurl start pointer");
             }
         }
     }
