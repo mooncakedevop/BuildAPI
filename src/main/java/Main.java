@@ -1,5 +1,6 @@
 import Analyzer.Analyzer;
 import soot.*;
+import soot.jimple.infoflow.android.manifest.ProcessManifest;
 import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.options.Options;
 import soot.util.Chain;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public class Main {
-    public void setupSoot(){
+    public void setupSoot(String apk) {
         soot.G.reset();
         Options.v().set_src_prec(Options.src_prec_apk);
         Options.v().set_output_format(Options.output_format_jimple);
@@ -19,10 +20,10 @@ public class Main {
         Options.v().set_keep_line_number(true);
         Options.v().set_no_bodies_for_excluded(true);
         Options.v().set_app(true);
-        String androidJarPath = Scene.v().getAndroidJarPath(GlobalConfig.defaultPlatform, GlobalConfig.defaultApkPath);
+        String androidJarPath = Scene.v().getAndroidJarPath(GlobalConfig.defaultPlatform, apk);
 
         List<String> pathList = new ArrayList<String>();
-        pathList.add(GlobalConfig.defaultApkPath);
+        pathList.add(apk);
         pathList.add(androidJarPath);
 
         Options.v().set_process_dir(pathList);
@@ -39,9 +40,18 @@ public class Main {
         PackManager.v().runPacks();
 //        PackManager.v().writeOutput();
     }
-    public static void main(String[] args){
+
+    public static void main(String[] args) {
         Main main = new Main();
-        main.setupSoot();
-        Analyzer aly  = new Analyzer(Scene.v().getClasses());
+        for (String apk : Util.allAPK(GlobalConfig.defaultApksPath)) {
+            try {
+                main.setupSoot(apk);
+                ProcessManifest processManifest = new ProcessManifest(apk);
+                Analyzer aly = new Analyzer(Scene.v().getClasses(), processManifest.getPackageName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 }

@@ -15,6 +15,7 @@ dependencies {
     implementation fileTree(dir:'lib',includes:['*jar'])
     implementation 'com.alibaba:fastjson:1.2.58'
     implementation 'org.soot-oss:soot:4.2.1'
+    implementation 'de.fraunhofer.sit.sse.flowdroid:soot-infoflow-android:2.10.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }

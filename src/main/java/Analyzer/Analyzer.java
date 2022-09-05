@@ -21,8 +21,8 @@ public class Analyzer {
             "<okhttp3.Headers$Builder: okhttp3.Headers$Builder <add>(java.lang.String, java.lang.String)>"});
     private List<String> post = Arrays.asList(new String[]{"<okhttp3.Request$Builder: okhttp3.Request$Builder post(okhttp3.RequestBody)>"});
 
-    public Analyzer(Chain<SootClass> classes) {
-        forwardAnalyze(classes);
+    public Analyzer(Chain<SootClass> classes, String pkg) {
+        forwardAnalyze(classes, pkg);
     }
 //    public void analyze(){
 //        forwardAnalyze(this.classes);
@@ -31,11 +31,11 @@ public class Analyzer {
     private void backwardAnalyze() {
     }
 
-    private void forwardAnalyze(Chain<SootClass> classes) {
+    private void forwardAnalyze(Chain<SootClass> classes, String pkg) {
         Iterator<SootClass> it = classes.stream().iterator();
         for (SootClass cls: classes) {
 //
-//            if (isExclude(cls.getPackageName()) || isExclude(cls.getName() )) continue;
+            if (cls.getPackageName() != pkg) continue;
             if (!cls.getName().contains("gosec"))continue;
             if (cls.isInterface()) {
                 checkAnnotation(cls);
@@ -72,7 +72,6 @@ public class Analyzer {
 
     private void statementAnalysis(JimpleBody body) {
 //        body.getUnits().snapshotIterator().next()
-        BriefUnitGraph ug = new BriefUnitGraph(body);
         Iterator<Unit> it = body.getUnits().snapshotIterator();
         while (it.hasNext()) {
             Unit u = it.next();
@@ -83,10 +82,12 @@ public class Analyzer {
                     super.caseInvokeStmt(stmt);
                     String sig = stmt.getInvokeExpr().getMethod().toString();
                     if (start.get(0).equals(sig)) {
+                        BriefUnitGraph ug = new BriefUnitGraph(body);
                         System.out.println(sig);
                         List<Unit> succ = ug.getSuccsOf(u);
                         identifyAttr(ug, succ,"okhttp");
                     }else if (sig.equals(RetrofitBuilder)){
+                        BriefUnitGraph ug = new BriefUnitGraph(body);
                         identifyAttr(ug, ug.getSuccsOf(u),"retrofit");
                     }
 
@@ -100,10 +101,14 @@ public class Analyzer {
                         String sig = invokeExpr.getMethodRef().getSignature();
 //                        okHttp
                         if (sig.equals(OkHttp.requestBuilder)) {
+                            BriefUnitGraph ug = new BriefUnitGraph(body);
+
                             System.out.println(sig);
                             List<Unit> succ = ug.getSuccsOf(u);
                             identifyAttr(ug, succ, "okhttp");
                         } else if (sig.equals(RetrofitBuilder)) {
+                            BriefUnitGraph ug = new BriefUnitGraph(body);
+
                             System.out.println("find retrofit");
                             identifyAttr(ug, ug.getSuccsOf(u), "retrofit");
                         }
