@@ -1,12 +1,10 @@
 import Analyzer.Analyzer;
 import soot.*;
-import soot.jimple.infoflow.android.SetupApplication;
-import soot.jimple.infoflow.android.manifest.ProcessManifest;
-import soot.jimple.infoflow.android.manifest.binary.BinaryAndroidApplication;
 import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.options.Options;
 import soot.util.Chain;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -36,16 +34,14 @@ public class Main {
         Options.v().set_wrong_staticness(Options.wrong_staticness_ignore);
         Options.v().set_whole_program(true);
         Options.v().set_allow_phantom_refs(true);
+//        Options.v().set_output_dir(System.getProperty("user.dir") + File.separator + "output");
         Scene.v().loadNecessaryClasses();
         PackManager.v().runPacks();
+//        PackManager.v().writeOutput();
     }
     public static void main(String[] args){
         Main main = new Main();
         main.setupSoot();
-        SetupApplication app = new SetupApplication(GlobalConfig.defaultPlatform, GlobalConfig.defaultApkPath);
-
-        Set<SootClass> methods = app.getEntrypointClasses();
-        CallGraph cg = Scene.v().getCallGraph();
         Analyzer aly  = new Analyzer(Scene.v().getClasses());
     }
 }
